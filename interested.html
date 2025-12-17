@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Interested Customers</title>
+
+  <style>
+    body { 
+      margin:0; 
+      font-family:Manrope; 
+      background:#f5f5f5; 
+    }
+
+    header { 
+      background:#5d4037; 
+      padding:16px; 
+      color:white; 
+      font-size:22px; 
+      font-weight:700;
+    }
+
+    table { 
+      width:100%; 
+      border-collapse:collapse; 
+      margin-top:20px; 
+    }
+
+    th, td { 
+      padding:12px; 
+      border-bottom:1px solid #ddd; 
+    }
+
+    th { 
+      background:#e0d4cc; 
+      font-weight:bold; 
+      color:#4e342e;
+    }
+
+    button {
+      padding:7px 12px;
+      border:none;
+      color:white;
+      cursor:pointer;
+      font-size:14px;
+      border-radius:8px;
+    }
+
+    .book-btn { background:#2e7d32; }
+    .delete-btn { background:#d9534f; }
+
+    /* POPUP */
+    #popup {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      background: rgba(0,0,0,0.5);
+    }
+
+    .popup-box {
+      background: white;
+      padding: 25px;
+      width: 350px;
+      text-align: center;
+      border-radius: 12px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #aaa;
+      font-size: 15px;
+      margin-top: 10px;
+    }
+
+    .popup-btn {
+      background:#5d4037;
+      padding:12px;
+      width:100%;
+      margin-top:15px;
+      border:none;
+      border-radius:8px;
+      color:white;
+      cursor:pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>⭐ Interested Customers</header>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Phone</th>
+      <th>Project</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="body"></tbody>
+</table>
+
+<!-- POPUP FOR BOOKING -->
+<div id="popup">
+  <div class="popup-box">
+    <h3>Enter Project Name</h3>
+    <input type="text" id="projectInput" placeholder="Project Name">
+    <button class="popup-btn" onclick="saveBooking()">Confirm Booking</button>
+  </div>
+</div>
+
+<script type="module">
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { 
+    getFirestore, collection, onSnapshot, deleteDoc, addDoc, doc 
+  } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+  // LOGIN PROTECTION
+  if (!localStorage.getItem("isAdmin")) {
+    window.location.href = "login.html";
+  }
+
+  const app = initializeApp({
+    apiKey: "AIzaSyC3toF-kGYcZBJ8EchutXkWZ7kIEHBldH8",
+    authDomain: "mkriti-websitei.firebaseapp.com",
+    projectId: "mkriti-websitei"
+  });
+
+  const db = getFirestore(app);
+  const body = document.getElementById("body");
+
+  let selectedData = null;
+
+  // Real-time display of interested customers
+  onSnapshot(collection(db, "interested-customer"), (snap) => {
+    body.innerHTML = "";
+    snap.forEach(docSnap => {
+      const d = docSnap.data();
+
+      body.innerHTML += `
+        <tr>
+          <td>${d.name}</td>
+          <td>${d.phone_number}</td>
+          <td>${d.project}</td>
+          <td>
+            <button class="book-btn" onclick='openPopup(${JSON.stringify({id: docSnap.id, ...d})})'>Booked</button>
+            <button class="delete-btn" onclick='deleteCustomer("${docSnap.id}")'>Delete</button>
+          </td>
+        </tr>
+      `;
+    });
+  });
+
+  // Open popup
+  window.openPopup = function(data) {
+    selectedData = data;
+    document.getElementById("popup").style.display = "flex";
+  };
+
+  // Save booking and move to booked_customer collection
+  window.saveBooking = async function () {
+    const projectName = document.getElementById("projectInput").value.trim();
+    if (projectName === "") return alert("Enter project name");
+
+    const { name, phone_number } = selectedData;
+
+    await addDoc(collection(db, "booked_customer"), {
+      name,
+      phone_number,
+      project: projectName
+    });
+
+    await deleteDoc(doc(db, "interested-customer", selectedData.id));
+
+    document.getElementById("popup").style.display = "none";
+    document.getElementById("projectInput").value = "";
+  };
+
+  // Delete
+  window.deleteCustomer = async function(id) {
+    await deleteDoc(doc(db, "interested-customer", id));
+  };
+
+</script>
+
+</body>
+</html>

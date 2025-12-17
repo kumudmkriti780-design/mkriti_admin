@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Queries</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Manrope, sans-serif;
+      background: #f5f5f5;
+    }
+
+    header {
+      background: #8d6e63;
+      padding: 16px;
+      color: white;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background: #e8dcd3;
+      font-weight: bold;
+      color: #5d4037;
+    }
+
+    button {
+      padding: 7px 12px;
+      border: none;
+      font-size: 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+      margin-right: 6px;
+    }
+
+    .interest-btn { background: #5d4037; }
+    .book-btn { background: #2e7d32; }
+    .delete-btn { background: #d9534f; }
+
+    /* POPUP */
+    #popup {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .popup-box {
+      background: white;
+      padding: 25px;
+      width: 350px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
+
+    .popup-btn {
+      background: #8d6e63;
+      margin-top: 15px;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>📩 Customer Queries</header>
+
+<div class="container">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Query</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="data-body"></tbody>
+  </table>
+</div>
+
+<!-- POPUP -->
+<div id="popup">
+  <div class="popup-box">
+    <h3>Enter Project Name</h3>
+    <input type="text" id="projectInput" placeholder="Project Name">
+    <button class="popup-btn" onclick="saveProject()">Save</button>
+  </div>
+</div>
+
+<script type="module">
+
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { 
+    getFirestore, collection, onSnapshot, deleteDoc, doc, addDoc 
+  } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC3toF-kGYcZBJ8EchutXkWZ7kIEHBldH8",
+    authDomain: "mkriti-websitei.firebaseapp.com",
+    projectId: "mkriti-websitei"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  const body = document.getElementById("data-body");
+
+  let selectedAction = "";
+  let selectedData = null;
+
+  // LOGIN PROTECTION
+  if (!localStorage.getItem("isAdmin")) {
+    window.location.href = "login.html";
+  }
+
+  // Real-time load queries
+  onSnapshot(collection(db, "query"), (snapshot) => {
+    body.innerHTML = "";
+
+    snapshot.forEach(docSnap => {
+      const d = docSnap.data();
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${d.name}</td>
+        <td>${d.phone_number}</td>
+        <td>${d.query}</td>
+        <td>
+          <button class="interest-btn" onclick='openPopup("interest", ${JSON.stringify({id: docSnap.id, ...d})})'>Interested</button>
+          <button class="book-btn" onclick='openPopup("book", ${JSON.stringify({id: docSnap.id, ...d})})'>Booked</button>
+          <button class="delete-btn" onclick='removeQuery("${docSnap.id}")'>Delete</button>
+        </td>
+      `;
+      body.appendChild(tr);
+    });
+  });
+
+  // Open popup
+  window.openPopup = function(type, data) {
+    selectedAction = type;
+    selectedData = data;
+    document.getElementById("popup").style.display = "flex";
+  }
+
+  // Save project then move data to collection
+  window.saveProject = async function () {
+    let project = document.getElementById("projectInput").value.trim();
+    if (project === "") return alert("Enter project name");
+
+    let { name, phone_number } = selectedData;
+
+    if (selectedAction === "interest") {
+      await addDoc(collection(db, "interested-customer"), {
+        name, phone_number, project
+      });
+    }
+
+    if (selectedAction === "book") {
+      await addDoc(collection(db, "booked_customer"), {
+        name, phone_number, project
+      });
+    }
+
+    // remove original query
+    await deleteDoc(doc(db, "query", selectedData.id));
+
+    document.getElementById("popup").style.display = "none";
+    document.getElementById("projectInput").value = "";
+  }
+
+  // Delete query
+  window.removeQuery = async function(id) {
+    await deleteDoc(doc(db, "query", id));
+    alert("Deleted");
+  }
+
+</script>
+
+</body>
+</html>

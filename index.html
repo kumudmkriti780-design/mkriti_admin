@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mkriti Admin Dashboard</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Manrope", sans-serif;
+      background: #f4f2ef;
+    }
+
+    header {
+      background: #8d6e63;
+      padding: 18px 24px;
+      color: white;
+      font-size: 22px;
+      font-weight: 700;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logout-btn {
+      background: #d9534f;
+      padding: 8px 12px;
+      border: none;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 60px auto;
+      text-align: center;
+    }
+
+    .greeting {
+      font-size: 32px;
+      font-weight: 700;
+      color: #4e342e;
+      margin-bottom: 40px;
+    }
+
+    .btn-grid {
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+      flex-wrap: wrap;
+    }
+
+    .dashboard-btn {
+      background: white;
+      padding: 32px 40px;
+      border-radius: 16px;
+      width: 260px;
+      text-align: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: 0.25s ease;
+      font-size: 20px;
+      font-weight: 600;
+      color: #5d4037;
+      border: 2px solid transparent;
+    }
+
+    .dashboard-btn:hover {
+      transform: translateY(-6px);
+      border-color: #8d6e63;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  MKriti Admin Panel
+  <button class="logout-btn" onclick="logout()">Logout</button>
+</header>
+
+<div class="container">
+
+  <div id="greet" class="greeting">Hello, User</div>
+
+  <div class="btn-grid">
+    <div class="dashboard-btn" onclick="goTo('queries.html')">
+      📩 Customer Queries
+    </div>
+
+    <div class="dashboard-btn" onclick="goTo('interested.html')">
+      ⭐ Interested Customers
+    </div>
+
+    <div class="dashboard-btn" onclick="goTo('bookings.html')">
+      📘 Booked Customers
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* LOGIN PROTECTION */
+  if (!localStorage.getItem("isAdmin")) {
+    window.location.href = "login.html";
+  }
+
+  /* SHOW EMPLOYEE NAME */
+  const name = localStorage.getItem("adminName") || "Admin";
+  document.getElementById("greet").textContent = "Hello, " + name;
+
+  /* LOGOUT */
+  function logout() {
+    localStorage.removeItem("isAdmin");
+    localStorage.removeItem("adminName");
+    window.location.href = "login.html";
+  }
+
+  /* NAVIGATION */
+  function goTo(page) {
+    window.location.href = page;
+  }
+</script>
+
+</body>
+</html>
